@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"regexp"
 	"time"
 
@@ -15,20 +16,32 @@ type PointsDBAccessor interface {
 
 type PointsService struct {
 	pointsDBAccessor PointsDBAccessor
+	rules            []Rule
 }
 
 func NewPointsService(pointsDBAccessor PointsDBAccessor) PointsService {
+	rules := []Rule{
+		RetailerNameRule(),
+		ReceiptTotalRule(),
+		ItemsRule(),
+		PurchaseDateRule(),
+		PurchaseTimeRule(),
+	}
 	return PointsService{
 		pointsDBAccessor: pointsDBAccessor,
+		rules:            rules,
 	}
 }
 
 func (p PointsService) Process(receipt model.Receipt) (string, error) {
-	// TODO: Calculate points from receipt
 	if !isValidReceipt(receipt) {
 		return "", customerror.NewInvalidReceiptError()
 	}
-	totalPoints := 42
+	totalPoints := 0
+	for _, rule := range p.rules {
+		totalPoints += rule(receipt)
+	}
+	fmt.Println(totalPoints)
 	return p.pointsDBAccessor.SavePoints(totalPoints), nil
 }
 
@@ -55,7 +68,7 @@ func isValidPattern(text string, pattern string) bool {
 }
 
 func isValidDateString(text string) bool {
-	_, err := time.Parse("01/02/2006", text)
+	_, err := time.Parse("2006-01-02", text)
 	return err == nil
 }
 
