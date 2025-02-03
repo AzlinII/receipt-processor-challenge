@@ -10,8 +10,6 @@ import (
 	"github.com/AzlinII/receipt-processor-challenge/internal/model"
 )
 
-const INVALID_RECEIPT_ERROR = "The receipt is invalid."
-
 type PointsProcessor interface {
 	Process(receipt model.Receipt) (string, error)
 	GetPoints(id string) (int, error)
@@ -28,7 +26,8 @@ func NewHandler(pointsProcessor PointsProcessor) Handler {
 }
 
 func (h Handler) Init(router *http.ServeMux) {
-	base := "/api/v1/receipts/"
+	version := "1.0.0"
+	base := fmt.Sprintf("/api/%s/receipts/", version)
 	fmt.Println(base)
 	router.HandleFunc("POST "+base+"process", h.Process)
 	router.HandleFunc("GET "+base+"{id}/points", h.Points)
